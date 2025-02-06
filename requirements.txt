@@ -1,3 +1,2 @@
-# Stores dependencies
-echo "flask"
-
+flask
+gunicorn
