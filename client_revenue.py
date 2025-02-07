@@ -16,22 +16,15 @@ ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 COMPANY_ID = os.getenv("COMPANY_ID")
 TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
 
-def refresh_access_token():
-    """Refresh QuickBooks Access Token using Refresh Token."""
-    global REFRESH_TOKEN, ACCESS_TOKEN
-
-    if not CLIENT_ID or not CLIENT_SECRET or not REFRESH_TOKEN:
-        print("❌ Missing CLIENT_ID, CLIENT_SECRET, or REFRESH_TOKEN. Check your .env file.")
-        return None, None
-
+def refresh_access_token(refresh_token):
+    """Refresh the QuickBooks access token using the refresh token."""
     auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
     auth_header = base64.b64encode(auth_string.encode()).decode()
 
     payload = {
         "grant_type": "refresh_token",
-        "refresh_token": REFRESH_TOKEN,
+        "refresh_token": refresh_token,
     }
-
     headers = {
         "Authorization": f"Basic {auth_header}",
         "Content-Type": "application/x-www-form-urlencoded",
@@ -39,22 +32,16 @@ def refresh_access_token():
 
     response = requests.post(TOKEN_URL, data=payload, headers=headers)
 
-    print("🔄 Response Status:", response.status_code)
-    print("🔍 Response Text:", response.text)
-
     if response.status_code == 200:
         tokens = response.json()
-        ACCESS_TOKEN = tokens.get("access_token")
-        REFRESH_TOKEN = tokens.get("refresh_token")
-
-        # ✅ Update .env file safely
-        update_env_file(ACCESS_TOKEN, REFRESH_TOKEN)
-
-        print("✅ Tokens updated successfully in .env file!")
-        return ACCESS_TOKEN, REFRESH_TOKEN
+        print("\n✅ Access token refreshed successfully!")
+        print("New Access Token:", tokens["access_token"])
+        print("New Refresh Token:", tokens["refresh_token"])
+        return tokens
     else:
-        print("❌ Error refreshing token:", response.status_code, response.text)
-        return None, None
+        print("\n❌ Failed to refresh access token:", response.status_code, response.text)
+        return None
+
 
 def update_env_file(access_token, refresh_token):
     """Safely update the .env file with new tokens."""

@@ -1,5 +1,7 @@
+# Stores dependencies
 flask
 gunicorn
 python-dotenv
-python-dotenv
 requests
+
+
