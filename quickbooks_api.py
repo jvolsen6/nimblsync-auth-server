@@ -17,8 +17,8 @@ COMPANY_ID = os.getenv("COMPANY_ID")
 if not CLIENT_ID or not CLIENT_SECRET or not TOKEN_URL or not REFRESH_TOKEN:
     raise ValueError("❌ ERROR: Missing required environment variables. Check .env file!")
 
-def refresh_access_token():
-    """Refresh QuickBooks Access Token using Refresh Token."""
+def refresh_access_token(refresh_token):
+    """Refresh the QuickBooks access token using the refresh token."""
     print("🔄 Attempting to refresh access token...")
 
     auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
@@ -26,7 +26,7 @@ def refresh_access_token():
 
     payload = {
         "grant_type": "refresh_token",
-        "refresh_token": REFRESH_TOKEN,
+        "refresh_token": refresh_token,
     }
 
     headers = {
@@ -45,20 +45,8 @@ def refresh_access_token():
         new_refresh_token = tokens.get("refresh_token")
 
         if new_access_token and new_refresh_token:
-            # Save new tokens to .env file
-            with open(".env", "r") as file:
-                lines = file.readlines()
-            with open(".env", "w") as file:
-                for line in lines:
-                    if line.startswith("ACCESS_TOKEN="):
-                        file.write(f"ACCESS_TOKEN={new_access_token}\n")
-                    elif line.startswith("REFRESH_TOKEN="):
-                        file.write(f"REFRESH_TOKEN={new_refresh_token}\n")
-                    else:
-                        file.write(line)
-
-            print("✅ Tokens updated successfully in .env file!")
-            return new_access_token, new_refresh_token
+            print("✅ Tokens refreshed successfully!")
+            return new_access_token, new_refresh_token  # Ensure only TWO values are returned
         else:
             print("❌ Error: Missing keys in token response!")
             return None, None
@@ -85,4 +73,9 @@ def get_profit_and_loss(access_token, company_id, start_date, end_date):
 
 # Run refresh token function if script is executed directly
 if __name__ == "__main__":
-    refresh_access_token()
+    access_token, refresh_token = refresh_access_token(REFRESH_TOKEN)
+
+    if access_token and refresh_token:
+        print("\n✅ New tokens retrieved successfully.")
+    else:
+        print("\n❌ Failed to refresh tokens.")

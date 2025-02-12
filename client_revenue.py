@@ -4,6 +4,7 @@ import csv
 import requests
 import base64
 from dotenv import load_dotenv
+from auth import refresh_access_token  # Import refresh_access_token from auth.py
 
 # Load environment variables
 load_dotenv(".env")
@@ -15,33 +16,6 @@ REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 COMPANY_ID = os.getenv("COMPANY_ID")
 TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
-
-def refresh_access_token(refresh_token):
-    """Refresh the QuickBooks access token using the refresh token."""
-    auth_string = f"{CLIENT_ID}:{CLIENT_SECRET}"
-    auth_header = base64.b64encode(auth_string.encode()).decode()
-
-    payload = {
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
-    }
-    headers = {
-        "Authorization": f"Basic {auth_header}",
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-
-    response = requests.post(TOKEN_URL, data=payload, headers=headers)
-
-    if response.status_code == 200:
-        tokens = response.json()
-        print("\n✅ Access token refreshed successfully!")
-        print("New Access Token:", tokens["access_token"])
-        print("New Refresh Token:", tokens["refresh_token"])
-        return tokens
-    else:
-        print("\n❌ Failed to refresh access token:", response.status_code, response.text)
-        return None
-
 
 def update_env_file(access_token, refresh_token):
     """Safely update the .env file with new tokens."""
@@ -57,6 +31,8 @@ def update_env_file(access_token, refresh_token):
                     file.write(f"REFRESH_TOKEN={refresh_token}\n")
                 else:
                     file.write(line)
+
+        print("✅ Tokens updated successfully in .env file.")
     except Exception as e:
         print(f"❌ Error updating .env file: {e}")
 
@@ -101,9 +77,12 @@ def main():
     global ACCESS_TOKEN, REFRESH_TOKEN
 
     print("🔄 Refreshing access token...")
-    ACCESS_TOKEN, REFRESH_TOKEN = refresh_access_token()
+    tokens = refresh_access_token(REFRESH_TOKEN)  # Use function from auth.py
 
-    if not ACCESS_TOKEN:
+    if tokens and len(tokens) == 2:  # Ensure we have exactly 2 values before unpacking
+        ACCESS_TOKEN, REFRESH_TOKEN = tokens
+        update_env_file(ACCESS_TOKEN, REFRESH_TOKEN)  # Save new tokens to .env
+    else:
         print("❌ Failed to refresh tokens. Exiting program.")
         return
 
