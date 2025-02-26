@@ -67,7 +67,9 @@ def generate_auth_url():
         f"&redirect_uri={REDIRECT_URI}&state={state}"
     )
     print("Authorization URL:", auth_url)
+    webbrowser.open(auth_url)  # Automatically open the URL in the default browser
     return auth_url
+
 
 
 # Exchange the authorization code for access and refresh tokens
